@@ -5,7 +5,7 @@
 
 // This is the player that creates the room
 const io = require('socket.io-client');
-const host = 'http://localhost:4322/games';
+const host = 'https://munchkin-game-center.herokuapp.com/games';
 
 // when you login with auth server, you'll receive an token, with user key, contains username and profile img. you'll need to send that to the game center in the following query format.
 
