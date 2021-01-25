@@ -12,15 +12,16 @@ const host = 'http://localhost:4322/games';
 
 const user = {
   username:'player1', // whatever get back from server 
-  profileImgUrl: "player1-img.url", // whatever stored in the server
-}
+  profileImgUrl: 'player1-img.url', // whatever stored in the server
+};
 
 const games = io.connect(host, {query:`user=${user.username}---${user.profileImgUrl}`});
 
 var localGameState;
+var roomInfo;
 
 // everybody can create game, or join a game. but NOT both.
-games.emit('CreateGame', user.username);
+games.emit('CreateRoom', user.username);
 // games.emit('Join', 'targetRoomInfo);
 
 //right after you connect to the game center, the server will send you a list of rooms open (not in game), it's an object, so use Object.keys to literater through it and display aviable rooms in your React logic.
@@ -32,48 +33,49 @@ games.emit('CreateGame', user.username);
 //     numOfPlayers: 2,
 //     inGame: false,
 //     currentPlayers: [ 
-  //   {
-  //     username: username,
-  //     profileImgUrl: currentUserImg,
-  //     socketID: socket.id,
-  //   },
+//   {
+//     username: username,
+//     profileImgUrl: currentUserImg,
+//     socketID: socket.id,
+//   },
 //     {another user info}
-  // ]
+// ]
 //   },
 //   anotherRoom: same format
 // }
 games.on('RoomList', (roomList)=>{
   // Your React logic goes here
   console.log('<RoomList>',roomList);
-})
+});
 
 games.on('NewRoomCreated', (gameRoomInfo)=>{
   // your react will start to render game room conponent
   console.log('<NewRoomCreated>',gameRoomInfo);
-})
+});
 
 
 // When new user joins the room , server will send out this event, with the user info. keys are: username, userImg(url to profile img) and a message.
 games.on('NewJoin', (payload)=>{
   // you can put some React logic to display a pop up window to noticify others there's a new user joined, and update the current view.
   console.log('<NewJoin>',payload);
+  roomInfo = payload.roomStatus.currentUser;
   // two parts, one key in payload is message, a simple message telling you who joined the room.
   // the other part is the updated game room status, under key payload.roomStatus.currentUser
-})
+});
 
 
 // when you're trying to join a room does NOT exsit, or already have 6 players,  you got an error. 
 // Once receive this event, go back to game center lobby. 
 games.on('JoinErr', (payload)=>{
   console.log('<JoinErr>',payload);
-})
+});
 
 
 // Use this method to leave the room, try not just disconnect it.
 // server will send out this event, with the message saying someone is left, and a updated room status. in payload.roomStatus.currentlayers
 games.on('LeftRoom', (payload)=>{
   console.log('<LeftRoom>',payload);
-})
+});
 
 // Use this event to properbly leave the game room, send it with !!!!! room owner's username !!!!!!!!.
 // setTimeout(()=>{
@@ -85,16 +87,17 @@ games.on('LeftRoom', (payload)=>{
 
 
 
-// setTimeout(()=>{
-//   games.emit('StartGame', {roomOwner: 'player1', players: ['player1','player2', 'player3']});
+setTimeout(()=>{
+  games.emit('InitGame', {roomOwner: 'player1', players: ['player1','player2', 'player3']});
 
-// },15000);
+},15000);
+
 
 games.on('InitialCards', (gameState)=>{
 
-  localGameState=gameState
+  localGameState=gameState;
 
-})
+});
 
 // setTimeout(()=>{
 //   games.emit('UpdateHand', {
