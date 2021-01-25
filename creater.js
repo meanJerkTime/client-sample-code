@@ -5,7 +5,8 @@
 
 // This is the player that creates the room
 const io = require('socket.io-client');
-const host = 'https://munchkin-game-center.herokuapp.com/games';
+// const host = 'https://munchkin-game-center.herokuapp.com/games';
+const host = 'http://localhost:4322/games';
 
 // when you login with auth server, you'll receive an token, with user key, contains username and profile img. you'll need to send that to the game center in the following query format.
 
@@ -43,55 +44,71 @@ games.emit('CreateGame', user.username);
 // }
 games.on('RoomList', (roomList)=>{
   // Your React logic goes here
-  console.log(roomList);
+  console.log('<RoomList>',roomList);
+})
+
+games.on('NewRoomCreated', (gameRoomInfo)=>{
+  // your react will start to render game room conponent
+  console.log('<NewRoomCreated>',gameRoomInfo);
 })
 
 
 // When new user joins the room , server will send out this event, with the user info. keys are: username, userImg(url to profile img) and a message.
 games.on('NewJoin', (payload)=>{
   // you can put some React logic to display a pop up window to noticify others there's a new user joined, and update the current view.
-  console.log(payload);
+  console.log('<NewJoin>',payload);
+  // two parts, one key in payload is message, a simple message telling you who joined the room.
+  // the other part is the updated game room status, under key payload.roomStatus.currentUser
 })
 
 
 // when you're trying to join a room does NOT exsit, or already have 6 players,  you got an error. 
-games.on('JoinErr', (errMessage)=>{
-  console.log(errMessage);
+// Once receive this event, go back to game center lobby. 
+games.on('JoinErr', (payload)=>{
+  console.log('<JoinErr>',payload);
 })
 
 
 // Use this method to leave the room, try not just disconnect it.
-// server will send out this event, with the user info. keys are: username, userImg(url to profile img) and a message.
+// server will send out this event, with the message saying someone is left, and a updated room status. in payload.roomStatus.currentlayers
 games.on('LeftRoom', (payload)=>{
-  console.log(payload);
+  console.log('<LeftRoom>',payload);
 })
+
+// Use this event to properbly leave the game room, send it with !!!!! room owner's username !!!!!!!!.
+// setTimeout(()=>{
+//   games.emit('LeaveRoom', 'player1')
+// },100000)
+
 
 // Please stop here for now the fullowing logic is still under development
 
-setTimeout(()=>{
-  games.emit('StartGame', 'player1');
 
-},10000);
+
+// setTimeout(()=>{
+//   games.emit('StartGame', {roomOwner: 'player1', players: ['player1','player2', 'player3']});
+
+// },15000);
 
 games.on('InitialCards', (gameState)=>{
-  console.log(gameState);
 
-  localGameState=gameState;
+  localGameState=gameState
+
 })
 
-setTimeout(()=>{
-  games.emit('UpdateHand', {
-    ...localGameState,
-    player1: {
-      level: 1,
-      cardsInHandQty:4,
-      cardsInHand:[
-        1,2,3,4
-      ],
-      cardsEquiptedQty:2,
-      cardsEquipted: [
-        3,4
-      ],
-    },
-  })
-},100000)
+// setTimeout(()=>{
+//   games.emit('UpdateHand', {
+//     ...localGameState,
+//     player1: {
+//       level: 1,
+//       cardsInHandQty:4,
+//       cardsInHand:[
+//         1,2,3,4
+//       ],
+//       cardsEquiptedQty:2,
+//       cardsEquipted: [
+//         3,4
+//       ],
+//     },
+//   })
+// },100000)
