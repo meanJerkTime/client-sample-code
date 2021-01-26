@@ -13,6 +13,7 @@ const user = {
 const games = io.connect(host, {query:`user=${user.username}---${user.profileImgUrl}`});
 
 var localGameState;
+var localWinner;
 
 
 games.emit('Join', 'player1');
@@ -49,22 +50,40 @@ games.on('LeftRoom', (payload)=>{
 games.on('InitialCards', (gameState)=>{
 
   localGameState=gameState;
+  console.log('initial state', localGameState);
 
 });
 
-setTimeout(()=>{
-  games.emit('UpdateHand', {
-    ...localGameState,
-    player3: {
-      level: 1,
-      cardsInHandQty:3,
-      cardsInHand:[
-        9,10,11,
-      ],
-      cardsEquiptedQty:1,
-      cardsEquipted: [
-        12,
-      ],
-    },
-  });
-},150000);
+
+setInterval(()=>{
+  if (!localWinner && localGameState &&localGameState.whosTurn === user.username){
+
+    games.emit('UpdateGameStateAndTurn', {
+      ...localGameState,
+  
+      [user.username]: {
+        userName: user.username,
+        level: Math.floor(Math.random() * 10),
+        cardsInHand:[Math.floor(Math.random() * 10)],
+        cardsEquipped: { 
+          headGear: Math.floor(Math.random() * 10), 
+          footGear: Math.floor(Math.random() * 10), 
+          weapon: [Math.floor(Math.random() * 10)],
+        },
+      },
+    });
+  }
+},7000);
+
+
+games.on('UpdateLocalGameState', (gameState)=> {
+  
+  localGameState=gameState;
+  console.log('updated state', localGameState);
+
+});
+
+games.on('Winner', (winner)=>{
+  localWinner = winner;
+  console.log('Winner is: ', localWinner);
+});

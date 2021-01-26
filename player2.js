@@ -13,6 +13,7 @@ const user = {
 const games = io.connect(host, {query:`user=${user.username}---${user.profileImgUrl}`});
 
 var localGameState;
+var localWinner;
 
 
 games.emit('Join', 'player1');
@@ -44,30 +45,48 @@ games.on('LeftRoom', (payload)=>{
 // Please stop here for now the fullowing logic is still under development
 
 // Use this event to properbly leave the game room, send it with !!!!! room owner's username !!!!!!!!.
-setTimeout(()=>{
-  games.emit('LeaveRoom', 'player1');
-},12000);
+// setTimeout(()=>{
+//   games.emit('LeaveRoom', 'player1');
+// },12000);
 
 
 games.on('InitialCards', (gameState)=>{
 
 
   localGameState=gameState;
+  console.log('initial state',localGameState);
 
 });
 
-// setTimeout(()=>{
-//   games.emit('UpdateHand', {
-//     player2: {
-//       level: 1,
-//       cardsInHandQty:1,
-//       cardsInHand:[
-//         5
-//       ],
-//       cardsEquiptedQty:3,
-//       cardsEquipted: [
-//         6,7,8
-//       ],
-//     },
-//   })
-// },120000)
+setInterval(()=>{
+  if (!localWinner && localGameState &&localGameState.whosTurn === user.username){
+
+    games.emit('UpdateGameStateAndTurn', {
+      ...localGameState,
+  
+      [user.username]: {
+        userName: user.username,
+        level: Math.floor(Math.random() * 10),
+        cardsInHand:[Math.floor(Math.random() * 10)],
+        cardsEquipped: { 
+          headGear: Math.floor(Math.random() * 10), 
+          footGear: Math.floor(Math.random() * 10), 
+          weapon: [Math.floor(Math.random() * 10)],
+        },
+      },
+    });
+  }
+},5000);
+
+
+games.on('UpdateLocalGameState', (gameState)=> {
+  
+  localGameState=gameState;
+  console.log('updated state', localGameState);
+
+});
+
+games.on('Winner', (winner)=>{
+  localWinner = winner;
+  console.log('Winner is: ', localWinner);
+});

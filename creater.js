@@ -18,7 +18,8 @@ const user = {
 const games = io.connect(host, {query:`user=${user.username}---${user.profileImgUrl}`});
 
 var localGameState;
-var roomInfo;
+var currentPlayers;
+var localWinner;
 
 // everybody can create game, or join a game. but NOT both.
 games.emit('CreateRoom', user.username);
@@ -51,6 +52,7 @@ games.on('RoomList', (roomList)=>{
 games.on('NewRoomCreated', (gameRoomInfo)=>{
   // your react will start to render game room conponent
   console.log('<NewRoomCreated>',gameRoomInfo);
+
 });
 
 
@@ -58,7 +60,7 @@ games.on('NewRoomCreated', (gameRoomInfo)=>{
 games.on('NewJoin', (payload)=>{
   // you can put some React logic to display a pop up window to noticify others there's a new user joined, and update the current view.
   console.log('<NewJoin>',payload);
-  roomInfo = payload.roomStatus.currentUser;
+  currentPlayers = payload.roomStatus.currentPlayers;
   // two parts, one key in payload is message, a simple message telling you who joined the room.
   // the other part is the updated game room status, under key payload.roomStatus.currentUser
 });
@@ -88,7 +90,8 @@ games.on('LeftRoom', (payload)=>{
 
 
 setTimeout(()=>{
-  games.emit('InitGame', {roomOwner: 'player1', players: ['player1','player2', 'player3']});
+  games.emit('InitGame', {roomOwner: user.username, players: currentPlayers});
+  localWinner = undefined;
 
 },15000);
 
@@ -96,22 +99,45 @@ setTimeout(()=>{
 games.on('InitialCards', (gameState)=>{
 
   localGameState=gameState;
+  console.log('initial state', localGameState);
 
 });
 
-// setTimeout(()=>{
-//   games.emit('UpdateHand', {
-//     ...localGameState,
-//     player1: {
-//       level: 1,
-//       cardsInHandQty:4,
-//       cardsInHand:[
-//         1,2,3,4
-//       ],
-//       cardsEquiptedQty:2,
-//       cardsEquipted: [
-//         3,4
-//       ],
-//     },
-//   })
-// },100000)
+setInterval(()=>{
+  if (!localWinner && localGameState && localGameState.whosTurn === user.username){
+
+    games.emit('UpdateGameStateAndTurn', {
+      ...localGameState,
+  
+      [user.username]: {
+        userName: user.username,
+        level: Math.floor(Math.random() * 10),
+        cardsInHand:[Math.floor(Math.random() * 10)],
+        cardsEquipped: { 
+          headGear: Math.floor(Math.random() * 10), 
+          footGear: Math.floor(Math.random() * 10), 
+          weapon: [Math.floor(Math.random() * 10)],
+        },
+      },
+    });
+  }
+},3000);
+
+games.on('UpdateLocalGameState', (gameState)=> {
+
+  localGameState=gameState;
+  console.log('updated state', localGameState);
+
+});
+
+
+setTimeout (()=>{
+
+  games.emit('GameOver', {winner: user.username, roomOwner:user.username});
+
+},40000);
+
+games.on('Winner', (winner)=>{
+  localWinner = winner;
+  console.log('Winner is: ', localWinner);
+});
